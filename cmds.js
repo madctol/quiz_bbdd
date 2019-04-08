@@ -151,8 +151,28 @@ exports.editCmd = (rl, id) => {
  * @param id Clave del quiz a probar.
  */
 exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
-    rl.prompt();
+    if (typeof id === "undefined") {
+        errorlog(`Falta el parámetro id.`);
+    } else if (id >= model.count()) {
+        errorlog('El valor del parámetro id no es válido.');
+    } else {
+        try {
+            const quiz = model.getByIndex(id);
+            rl.question(colorize(quiz.question+'? ', 'red'), answer => {
+                if (quiz.answer.trim().toUpperCase() == answer.trim().toUpperCase()){
+                    log('Su respuesta es correcta');
+                    biglog('Correcta', 'green');
+                    rl.prompt();
+                } else {
+                    log('Su respuesta es incorrecta');
+                    biglog('Incorrecta','red');
+                    rl.prompt();
+                }
+            });
+        } catch(error) {
+            errorlog(error.message);
+        }
+    }
 };
 
 
@@ -163,8 +183,50 @@ exports.testCmd = (rl, id) => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.playCmd = rl => {
-    log('Jugar.', 'red');
-    rl.prompt();
+
+    let array = new Array();
+    for (let i=0; i<model.count(); i++){
+        array.push(i);
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    shuffleArray(array);
+
+    let abort = false;
+    let hits = 0;
+    function playQuiz(id){
+        if (id < array.length){
+            let quiz = model.getByIndex(id);
+            rl.question(colorize(quiz.question+'? ', 'red'), answer => {
+                if (quiz.answer.trim().toUpperCase() == answer.trim().toUpperCase()){
+                    hits++;
+                    log('CORRECTO - Lleva ' + hits + ' aciertos.');
+                } else {
+                    abort = true;
+                    log('INCORRECTO.');
+                }
+                if (!abort && id+1<array.length){
+                    playQuiz(id+1);
+                } else {
+                    if (!abort){
+                        log('No hay nada más que preguntar.');
+                    }
+                    log('Fin del juego. Aciertos: ' + hits);
+                    biglog(hits, 'magenta');
+                    rl.prompt();
+                }
+            });
+        }
+    }
+    
+    playQuiz(0);
+    
 };
 
 
@@ -174,9 +236,8 @@ exports.playCmd = rl => {
  * @param rl Objeto readline usado para implementar el CLI.
  */
 exports.creditsCmd = rl => {
-    log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
+    log('Autor de la práctica:');
+    log('Miguel Ángel Díaz Calvo', 'green');
     rl.prompt();
 };
 
