@@ -202,7 +202,7 @@ exports.playCmd = rl => {
     let hits = 0;
     function playQuiz(id){
         if (id < array.length){
-            let quiz = model.getByIndex(id);
+            let quiz = model.getByIndex(array[id]);
             rl.question(colorize(quiz.question+'? ', 'red'), answer => {
                 if (quiz.answer.trim().toUpperCase() == answer.trim().toUpperCase()){
                     hits++;
